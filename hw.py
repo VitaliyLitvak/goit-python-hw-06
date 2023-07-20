@@ -31,7 +31,7 @@ def user_input_split(user_input):
     
 
 def handle_hello():
-    return "How can I help you?"
+    return "Добрий день. Чим можу допомогти?"
 
 
 @input_error
@@ -144,7 +144,7 @@ def main():
     while True:
         user_input = input("Введіть будь-ласка команду: ")
         if user_input in STOP_LIST:
-            print("Good bye!")
+            print("До побачення!")
             break
         else:
             commands(user_input)
