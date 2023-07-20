@@ -1,0 +1,154 @@
+from classes import Record, Name, Phone, Birthday, AddressBook, Iterator
+import re
+
+
+STOP_LIST = ("good bye", "close", "exit")
+
+address_book = AddressBook()
+
+
+def input_error(func):
+    def inner(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except KeyError:
+            return "Контакт або номер телефону не знайдений."
+        except (IndexError, AttributeError):
+            return "Не вірна команда."
+        except ValueError:
+            return "Введені данні некоректні."
+    return inner
+
+
+def user_input_split(user_input):
+    matches = re.match(r'\w+\s+(\D+)\s([+]?\d{7,15})', user_input)
+    if matches:
+        name = Name(matches.group(1))
+        phone = Phone(matches.group(2))
+        return name, phone
+    else:
+        return "Данні відсутні."
+    
+
+def handle_hello():
+    return "How can I help you?"
+
+
+@input_error
+def handle_add(*args):
+    args = args[0].split(' ')
+    name = Name(args[1])
+    birthday = ''
+    if len(args) >= 4:
+        birthday = Birthday(args[-1])
+    record = Record(name, birthday=birthday)
+    for p in args[2:-1]:
+        phone = Phone(p)
+        record.add_phone(phone)
+    if str(name) not in address_book.data.keys():
+        address_book.add_record(record)
+    else:
+        current_rec = address_book.data[str(name)].phones
+        for p in record.phones:
+            if p in current_rec:
+                current_rec.remove(p)
+        print(record)
+        address_book.update_record(record)
+    return f"Name: {str(name)}\n{address_book.data[str(name)]}\n"
+
+
+@input_error
+def handle_change(user_input):
+    matches = re.match(r'\w+\s+(\D+)\s([+]?\d{7,15})\s([+]?\d{7,15})', user_input)
+    name, old_phone, new_phone = matches.group(1), Phone(matches.group(2)), Phone(matches.group(3))
+    if name in address_book.data.keys():
+        record = address_book.data[name]
+        record.change_phone(old_phone, new_phone)
+        address_book.add_record(record)
+        return f"Контакт {name} був змінений. Новий номер телефону {new_phone}.\n"
+    else:
+        raise KeyError
+ 
+    
+@input_error
+def handle_delete(user_input):
+    matches = re.match(r'\w+\s+(\D+)\s([+]?\d{7,15})', user_input)
+    if matches:
+        name, phone = matches.group(1), matches.group(2)
+    if name in address_book.data.keys():
+        record = address_book.data[name]
+        record.delete_phone(phone)
+        if record.phones:
+            address_book.add_record(record)
+        else:
+            del address_book.data[name]
+        return f"Контакт {name} був змінений. Номер телефону {phone} видалений.\n"
+    else:
+        return f"У контакта {name} номер телефона {phone} не знайдений.\n"
+
+    
+@input_error   
+def handle_phone(user_input):
+    name = re.match(r'\w+\s+(\D+)', user_input).group(1)
+    if name in address_book.data.keys():
+        return f"Контакт {name}: {address_book.data[name]}\n"
+    else:
+        raise KeyError
+    
+    
+@input_error 
+def handle_birthday(user_input):
+    name = re.match(r'\w+\s+(\D+)', user_input).group(1)
+    if name in address_book.data.keys():
+        record = address_book.data[name]
+        days = record.days_to_birthday()
+        return f"До дня народження {name} залишилось {days}д. День народження {record.birthday}\n"
+    else:
+        raise KeyError 
+    
+def handle_showall():
+    if not address_book.data:
+        return "Книга контактів порожня"
+    else:
+        iterator = Iterator(address_book)
+        for record in iterator:
+            print(record)
+            try:
+                input("Нажміть 'Enter' для продовження\n")
+            except KeyboardInterrupt:
+                break
+    return "Кінець\n"
+
+def commands(user_input):
+        if user_input.lower() == "Добрий день!":
+            response = handle_hello()
+        elif re.search(r"^add ", user_input, re.IGNORECASE):
+            response = handle_add(user_input)
+        elif re.search(r"^change ", user_input, re.IGNORECASE):
+            response = handle_change(user_input)
+        elif re.search(r"^delete ", user_input, re.IGNORECASE):
+            response = handle_delete(user_input)    
+        elif re.search(r"^phone ", user_input, re.IGNORECASE):
+            response = handle_phone(user_input)
+        elif re.search(r"^birthday ", user_input, re.IGNORECASE):
+            response = handle_birthday(user_input)    
+        elif user_input.lower() == "show all":
+            response = handle_showall()
+        else:
+            response = "Не вірна команда."
+        if response:
+            print(response)    
+
+
+def main():
+    while True:
+        user_input = input("Введіть будь-ласка команду: ")
+        if user_input in STOP_LIST:
+            print("Good bye!")
+            break
+        else:
+            commands(user_input)
+
+      
+if __name__ == "__main__":
+        main()
