@@ -72,11 +72,17 @@ class Birthday(Field):
         self._value = self.is_valid_birthday(new_value)
 
     def is_valid_birthday(self, value):
-        pattern = r"([0-9]{2})[\\\/\-\., ]?([0-9]{2})[\\\/\-\., ]?([0-9]{4})"
+        pattern = r"^([0-9]{2})[\\\/\-\., ]?([0-9]{2})[\\\/\-\., ]?([0-9]{4})$"
         match = re.match(pattern, value)
-        if (match is False) or not (1900 <= int(match.group(3)) <= 2100) or not (1 <= int(match.group(2)) <= 12):
+        if not match: 
             return False
-        birthday = date(int(match.group(3)), int(match.group(2)), int(match.group(1)))
+        else:
+            day = int(match.group(1))
+            month = int(match.group(2))
+            year = int(match.group(3))
+        if not (1900 <= year <= 2100) or not (1 <= month <= 12):
+            return False
+        birthday = date(year, month, day)
         return birthday
 
 

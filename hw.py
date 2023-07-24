@@ -39,11 +39,21 @@ def handle_add(*args):
     args = args[0].split(' ')
     name = Name(args[1])
     birthday = ''
-    if len(args) >= 4:
-        birthday = Birthday(args[-1])
     record = Record(name, birthday=birthday)
-    for p in args[2:-1]:
-        phone = Phone(p)
+    if len(args) >= 4:
+        match = re.match(r"^([0-9]{2})[\\\/\-\., ]?([0-9]{2})[\\\/\-\., ]?([0-9]{4})$", args[-1])
+        if bool(match):
+            birthday = Birthday(args[-1])
+            record = Record(name, birthday=birthday)
+            for p in args[2:-1]:
+                phone = Phone(p)
+                record.add_phone(phone)
+        else:
+            for p in args[2:]:
+                phone = Phone(p)
+                record.add_phone(phone)
+    else:
+        phone = Phone(args[2])
         record.add_phone(phone)
     if str(name) not in address_book.data.keys():
         address_book.add_record(record)
@@ -52,7 +62,6 @@ def handle_add(*args):
         for p in record.phones:
             if p in current_rec:
                 current_rec.remove(p)
-        print(record)
         address_book.update_record(record)
     return f"Name: {str(name)}\n{address_book.data[str(name)]}\n"
 
